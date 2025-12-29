@@ -49,5 +49,8 @@
   "overrides": {},
   "engines": {
     "node": ">=18"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
