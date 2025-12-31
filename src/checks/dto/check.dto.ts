@@ -1,5 +1,5 @@
-import { IsNumber, IsString, IsOptional, Min, Max } from "class-validator";
-import { Type } from "class-transformer";
+import { IsNumber, IsString, IsOptional, Min, Max, IsBoolean } from "class-validator";
+import { Type, Transform } from "class-transformer";
 
 export class CreateCheckDto {
     @IsNumber()
@@ -27,6 +27,11 @@ export class CreateCheckDto {
     @IsString()
     @IsOptional()
     customerAddress?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    @Transform(({ value }) => value === true || value === "true")
+    autoUse?: boolean;
 }
 
 export class UseCheckDto {

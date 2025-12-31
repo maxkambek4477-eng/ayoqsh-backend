@@ -92,34 +92,58 @@ export class ChecksService {
             });
         }
 
-        // Chek yaratish va mijoz balansini yangilash (darhol ishlatilgan holda)
-        const [check] = await this.prisma.$transaction([
-            this.prisma.check.create({
-                data: {
-                    code,
-                    qrCode,
-                    amountLiters: dto.amountLiters,
-                    operatorId: dto.operatorId,
-                    stationId: dto.stationId,
-                    customerName: dto.customerName,
-                    customerPhone: dto.customerPhone,
-                    customerAddress: dto.customerAddress,
-                    customerId: customer.id,
-                    status: "used",
-                    usedAt: new Date(),
-                    expiresAt,
-                },
-                include: {
-                    station: { select: { name: true } },
-                },
-            }),
-            this.prisma.user.update({
-                where: { id: customer.id },
-                data: {
-                    balanceLiters: { increment: dto.amountLiters },
-                },
-            }),
-        ]);
+        // Chek yaratish
+        if (dto.autoUse) {
+            // Qayta qo'shish - darhol used va balansga qo'shish
+            const [check] = await this.prisma.$transaction([
+                this.prisma.check.create({
+                    data: {
+                        code,
+                        qrCode,
+                        amountLiters: dto.amountLiters,
+                        operatorId: dto.operatorId,
+                        stationId: dto.stationId,
+                        customerName: dto.customerName,
+                        customerPhone: dto.customerPhone,
+                        customerAddress: dto.customerAddress,
+                        customerId: customer.id,
+                        status: "used",
+                        usedAt: new Date(),
+                        expiresAt,
+                    },
+                    include: {
+                        station: { select: { name: true } },
+                    },
+                }),
+                this.prisma.user.update({
+                    where: { id: customer.id },
+                    data: {
+                        balanceLiters: { increment: dto.amountLiters },
+                    },
+                }),
+            ]);
+            return check;
+        }
+
+        // Oddiy yaratish - kutilmoqda holatida
+        const check = await this.prisma.check.create({
+            data: {
+                code,
+                qrCode,
+                amountLiters: dto.amountLiters,
+                operatorId: dto.operatorId,
+                stationId: dto.stationId,
+                customerName: dto.customerName,
+                customerPhone: dto.customerPhone,
+                customerAddress: dto.customerAddress,
+                customerId: customer.id,
+                status: "pending",
+                expiresAt,
+            },
+            include: {
+                station: { select: { name: true } },
+            },
+        });
 
         return check;
     }
