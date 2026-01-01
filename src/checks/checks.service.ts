@@ -343,6 +343,17 @@ export class ChecksService {
                 cancelled: "Bekor qilingan",
             };
 
+            // O'zbekiston vaqt zonasi (UTC+5)
+            const formatDate = (date: Date) => {
+                const uzDate = new Date(date.getTime() + 5 * 60 * 60 * 1000);
+                const day = String(uzDate.getUTCDate()).padStart(2, "0");
+                const month = String(uzDate.getUTCMonth() + 1).padStart(2, "0");
+                const year = uzDate.getUTCFullYear();
+                const hours = String(uzDate.getUTCHours()).padStart(2, "0");
+                const minutes = String(uzDate.getUTCMinutes()).padStart(2, "0");
+                return `${day}/${month}/${year}, ${hours}:${minutes}`;
+            };
+
             worksheet.addRow({
                 index: index + 1,
                 telegramId: check.customer?.telegramId || "-",
@@ -350,8 +361,8 @@ export class ChecksService {
                 phone: check.customer?.phone || check.customerPhone || "-",
                 code: check.code,
                 liters: Number(check.amountLiters),
-                createdAt: check.createdAt.toLocaleString("uz-UZ"),
-                usedAt: check.usedAt ? check.usedAt.toLocaleString("uz-UZ") : "-",
+                createdAt: formatDate(check.createdAt),
+                usedAt: check.usedAt ? formatDate(check.usedAt) : "-",
                 status: statusMap[check.status] || check.status,
                 station: check.station?.name || "-",
                 operator: check.operator?.fullName || "-",
