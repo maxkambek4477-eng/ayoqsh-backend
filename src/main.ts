@@ -10,8 +10,8 @@ async function bootstrap() {
     app.enableCors();
 
     const port = process.env.PORT || 3001;
-    await app.listen(port);
-    console.log(`🚀 NestJS server running on http://localhost:${port}`);
+    await app.listen(port, "0.0.0.0");
+    console.log(`🚀 NestJS server running on http://0.0.0.0:${port}`);
 }
 
 bootstrap().catch((err) => {
