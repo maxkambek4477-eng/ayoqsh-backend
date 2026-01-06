@@ -48,13 +48,13 @@ export class BotUpdate {
                 const checkCode = payload.replace("check_", "");
                 pendingChecks.set(telegramId, checkCode);
                 await ctx.reply(
-                    "🎉 *AYoQSH Loyiha botiga xush kelibsiz!*\n\n⚠️ Chekni ishlatish uchun avval ro'yxatdan o'ting.\n\nTelefon raqamingizni yuboring:",
+                    "🎉 *NBS Gaz Oil bonusli loyihasi botiga xush kelibsiz!*\n\n⚠️ Chekni ishlatish uchun avval ro'yxatdan o'ting.\n\nTelefon raqamingizni yuboring:",
                     { parse_mode: "Markdown", reply_markup: this.phoneMenu.reply_markup }
                 );
                 return;
             }
             await ctx.reply(
-                "🎉 *AYoQSH Loyiha botiga xush kelibsiz!*\n\nRo'yxatdan o'tish uchun telefon raqamingizni yuboring.",
+                "🎉 *NBS Gaz Oil bonusli loyihasi botiga xush kelibsiz!*\n\n⚠️ Chekni ishlatish uchun avval ro'yxatdan o'ting.\n\nTelefon raqamingizni yuboring:",
                 { parse_mode: "Markdown", reply_markup: this.phoneMenu.reply_markup }
             );
             return;
