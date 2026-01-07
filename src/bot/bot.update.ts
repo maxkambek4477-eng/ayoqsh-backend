@@ -102,7 +102,7 @@ export class BotUpdate {
         userSessions.set(telegramId, session);
 
         await ctx.reply(
-            "📝 *Ism va familiyangizni kiriting:*\n\nMasalan: Alisher Navoiy",
+            "📝 *Ism va familiyangizni kiriting:*\n\nMasalan: Shahriyor Zaripov",
             { parse_mode: "Markdown", reply_markup: { remove_keyboard: true } }
         );
     }
