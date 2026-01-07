@@ -20,7 +20,7 @@ import { PrismaModule } from "../prisma/prisma.module";
                     launchOptions: token ? {
                         webhook: undefined,
                         dropPendingUpdates: true, // Eski xabarlarni o'tkazib yuborish
-                    } : false, // Token bo'lmasa botni ishga tushirmaslik
+                    } : false, 
                 };
             },
             inject: [ConfigService],
