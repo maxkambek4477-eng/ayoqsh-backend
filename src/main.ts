@@ -7,8 +7,14 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    const allowedOrigins = [
+        "https://nbsgazoil.uz",
+        "https://www.nbsgazoil.uz",
+        process.env.FRONTEND_URL,
+    ].filter((origin): origin is string => Boolean(origin));
+
     app.enableCors({
-        origin: process.env.FRONTEND_URL || "*",
+        origin: allowedOrigins,
         credentials: true,
     });
 
