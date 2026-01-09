@@ -65,6 +65,7 @@ model Check {
   qrCode       String?     @map("qr_code")
   amountLiters Decimal     @map("amount_liters") @db.Decimal(10, 2)
   status       CheckStatus @default(pending)
+  isPrinted    Boolean     @default(false) @map("is_printed")
 
   customerName    String? @map("customer_name")
   customerPhone   String? @map("customer_phone")

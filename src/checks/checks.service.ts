@@ -51,7 +51,6 @@ export class ChecksService {
     }
 
     private normalizePhone(phone: string): string {
-        // Telefon raqamidan faqat raqamlarni olish va oxirgi 9 ta raqamni qaytarish
         const digits = phone.replace(/\D/g, "");
         return digits.slice(-9);
     }
@@ -59,7 +58,6 @@ export class ChecksService {
     async create(dto: CreateCheckDto) {
         const code = this.generateCode();
 
-        // QR kod generatsiya qilish
         const botUsername = this.configService.get<string>("BOT_USERNAME") || "ayoqsh_bot";
         const telegramLink = `https://t.me/${botUsername}?start=check_${code}`;
         const qrCode = await this.qrService.generateQRCode(telegramLink);
@@ -69,12 +67,9 @@ export class ChecksService {
 
         let customerId: number | null = null;
 
-        // Faqat telefon raqami bo'lsa mijozni topish/yaratish
         if (dto.customerPhone && dto.customerPhone.trim()) {
-            // Telefon raqamini normallashtirish
             const normalizedPhone = this.normalizePhone(dto.customerPhone);
 
-            // Mijozni telefon raqami bo'yicha topish (turli formatlarni tekshirish)
             let customer = await this.prisma.user.findFirst({
                 where: {
                     OR: [
@@ -98,7 +93,6 @@ export class ChecksService {
             }
             customerId = customer.id;
 
-            // Agar autoUse bo'lsa - darhol balansga qo'shish
             if (dto.autoUse) {
                 const [check] = await this.prisma.$transaction([
                     this.prisma.check.create({
@@ -131,7 +125,6 @@ export class ChecksService {
             }
         }
 
-        // Oddiy yaratish - kutilmoqda holatida (mijoz bo'lmasa ham)
         const check = await this.prisma.check.create({
             data: {
                 code,
@@ -163,8 +156,7 @@ export class ChecksService {
             throw new NotFoundException("Chek topilmadi");
         }
 
-        // pending yoki printed statusidagi cheklar ishlatilishi mumkin
-        if ((check.status as string) !== "pending" && (check.status as string) !== "printed") {
+        if (check.status !== "pending") {
             throw new BadRequestException("Bu chek allaqachon ishlatilgan yoki bekor qilingan");
         }
 
@@ -222,7 +214,6 @@ export class ChecksService {
             throw new NotFoundException("Chek topilmadi");
         }
 
-        // Agar chek "used" bo'lsa va mijoz bor bo'lsa - balansdan ayirish
         if (check.status === "used" && check.customerId) {
             await this.prisma.$transaction([
                 this.prisma.check.delete({ where: { id } }),
@@ -236,7 +227,6 @@ export class ChecksService {
             return { deleted: true, balanceUpdated: true };
         }
 
-        // Oddiy o'chirish
         await this.prisma.check.delete({ where: { id } });
         return { deleted: true, balanceUpdated: false };
     }
@@ -255,7 +245,6 @@ export class ChecksService {
             throw new BadRequestException("Bu chekda mijoz mavjud emas");
         }
 
-        // Yangi chek kodi va QR kod yaratish
         const code = this.generateCode();
         const botUsername = this.configService.get<string>("BOT_USERNAME") || "ayoqsh_bot";
         const telegramLink = `https://t.me/${botUsername}?start=check_${code}`;
@@ -264,7 +253,6 @@ export class ChecksService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        // Yangi chek yaratish (used holati) va mijoz balansiga qo'shish
         const [newCheck] = await this.prisma.$transaction([
             this.prisma.check.create({
                 data: {
@@ -304,23 +292,10 @@ export class ChecksService {
             throw new NotFoundException("Chek topilmadi");
         }
 
-        if (check.status !== "pending") {
-            throw new BadRequestException("Faqat kutilayotgan chekni tasdiqlash mumkin");
-        }
-
-        if (new Date() > check.expiresAt) {
-            await this.prisma.check.update({
-                where: { id },
-                data: { status: "expired" },
-            });
-            throw new BadRequestException("Chek muddati tugagan");
-        }
-
-        // Chop etilgan statusiga o'zgartirish
         return this.prisma.check.update({
             where: { id },
             data: {
-                status: "printed" as any,
+                isPrinted: true,
             },
         });
     }
@@ -367,7 +342,6 @@ export class ChecksService {
     }
 
     async exportToExcel(startDate: Date, endDate: Date): Promise<Buffer> {
-        // Sana oralig'idagi cheklar
         const checks = await this.prisma.check.findMany({
             where: {
                 createdAt: {
@@ -393,7 +367,6 @@ export class ChecksService {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Cheklar");
 
-        // Ustun sarlavhalari
         worksheet.columns = [
             { header: "№", key: "index", width: 5 },
             { header: "Telegram ID", key: "telegramId", width: 15 },
@@ -408,7 +381,6 @@ export class ChecksService {
             { header: "Operator", key: "operator", width: 20 },
         ];
 
-        // Sarlavha stilini o'zgartirish
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).fill = {
             type: "pattern",
@@ -417,7 +389,6 @@ export class ChecksService {
         };
         worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
 
-        // Ma'lumotlarni qo'shish
         checks.forEach((check, index) => {
             const statusMap: Record<string, string> = {
                 pending: "Kutilmoqda",
@@ -427,7 +398,6 @@ export class ChecksService {
                 cancelled: "Bekor qilingan",
             };
 
-            // O'zbekiston vaqt zonasi (UTC+5)
             const formatDate = (date: Date) => {
                 const uzDate = new Date(date.getTime() + 5 * 60 * 60 * 1000);
                 const day = String(uzDate.getUTCDate()).padStart(2, "0");
@@ -453,7 +423,6 @@ export class ChecksService {
             });
         });
 
-        // Chegaralar qo'shish
         worksheet.eachRow((row, rowNumber) => {
             row.eachCell((cell) => {
                 cell.border = {

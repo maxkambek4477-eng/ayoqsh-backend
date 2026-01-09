@@ -85,6 +85,7 @@ export class BotService {
             return { success: false, message: "Chek topilmadi!" };
         }
 
+        // Faqat pending statusidagi cheklar ishlatilishi mumkin
         if (check.status !== "pending") {
             const statusText =
                 check.status === "used" ? "allaqachon ishlatilgan" :

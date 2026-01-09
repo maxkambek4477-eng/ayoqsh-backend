@@ -13,7 +13,6 @@ export class UsersService {
             where: role ? { role } : undefined,
             include: {
                 station: { select: { id: true, name: true } },
-                // Mijozlar uchun oxirgi ishlatilgan chek orqali shaxobchani olish
                 usedChecks: {
                     select: {
                         station: { select: { id: true, name: true } },
@@ -27,7 +26,6 @@ export class UsersService {
 
         return users.map(({ password, usedChecks, ...user }) => ({
             ...user,
-            // Mijozlar uchun oxirgi chek shaxobchasini qo'shish
             lastStation: usedChecks?.[0]?.station || null,
         }));
     }
