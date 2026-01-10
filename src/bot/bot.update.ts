@@ -152,7 +152,7 @@ export class BotUpdate {
     @Hears("ℹ️ Yordam")
     async onHelp(@Ctx() ctx: SessionContext) {
         await ctx.reply(
-            "ℹ️ *Yordam*\n\n📱 Chek kiritish - Kod kiritib litr yig'ing\n👤 Profil - Balans ko'ring\n📊 Statistika - Oylik ma'lumotlar",
+            "ℹ️ *Yordam*\n\n📱 Chek kiritish - Kod kiritib litr yig'ing\n👤 Profil - Balans ko'ring\n📊 Statistika - Oylik ma'lumotlar\n\nUshbu bot @webgradeuz tomonidan ishlab chiqilgan.",
             { parse_mode: "Markdown", reply_markup: this.mainMenu.reply_markup }
         );
     }
