@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
+import { getBotToken } from "nestjs-telegraf";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -8,6 +9,13 @@ async function bootstrap() {
 
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     app.enableCors();
+
+    // Webhook endpoint (agar webhook rejimi yoqilgan bo'lsa)
+    const webhookDomain = process.env.WEBHOOK_DOMAIN;
+    if (webhookDomain) {
+        const bot = app.get(getBotToken());
+        app.use(bot.webhookCallback("/bot/webhook"));
+    }
 
     // Graceful shutdown
     app.enableShutdownHooks();

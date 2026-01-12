@@ -1,4 +1,4 @@
-import { Module, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { TelegrafModule, InjectBot } from "nestjs-telegraf";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { Telegraf } from "telegraf";
@@ -13,15 +13,32 @@ import { PrismaModule } from "../prisma/prisma.module";
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => {
                 const token = configService.get<string>("BOT_TOKEN");
+                const webhookDomain = configService.get<string>("WEBHOOK_DOMAIN");
+
                 if (!token) {
                     console.warn("⚠️ BOT_TOKEN topilmadi - bot ishlamaydi");
+                    return { token: "dummy_token", launchOptions: false };
                 }
+
+                // Webhook rejimi
+                if (webhookDomain) {
+                    return {
+                        token,
+                        launchOptions: {
+                            webhook: {
+                                domain: webhookDomain,
+                                hookPath: "/bot/webhook",
+                            },
+                        },
+                    };
+                }
+
+                // Polling rejimi (local development uchun)
                 return {
-                    token: token || "dummy_token",
-                    launchOptions: token ? {
+                    token,
+                    launchOptions: {
                         dropPendingUpdates: true,
-                        allowedUpdates: ["message", "callback_query"],
-                    } : false,
+                    },
                 };
             },
             inject: [ConfigService],
@@ -30,7 +47,7 @@ import { PrismaModule } from "../prisma/prisma.module";
     providers: [BotUpdate, BotService],
     exports: [BotService],
 })
-export class BotModule implements OnModuleInit, OnModuleDestroy {
+export class BotModule implements OnModuleInit {
     constructor(
         @InjectBot() private bot: Telegraf,
         private configService: ConfigService
@@ -38,23 +55,12 @@ export class BotModule implements OnModuleInit, OnModuleDestroy {
 
     async onModuleInit() {
         const token = this.configService.get<string>("BOT_TOKEN");
-        if (token) {
-            try {
-                // Avvalgi webhook yoki polling ni tozalash
-                await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
-                console.log("✅ Telegram bot tayyor");
-            } catch (error: any) {
-                console.error("❌ Bot init xatosi:", error.message);
-            }
-        }
-    }
+        const webhookDomain = this.configService.get<string>("WEBHOOK_DOMAIN");
 
-    async onModuleDestroy() {
-        try {
-            await this.bot.stop("SIGTERM");
-            console.log("🛑 Telegram bot to'xtatildi");
-        } catch (error: any) {
-            console.error("Bot to'xtatishda xatolik:", error.message);
+        if (token && webhookDomain) {
+            console.log(`✅ Telegram bot webhook rejimida: ${webhookDomain}/bot/webhook`);
+        } else if (token) {
+            console.log("✅ Telegram bot polling rejimida");
         }
     }
 }
