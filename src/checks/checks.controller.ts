@@ -39,12 +39,18 @@ export class ChecksController {
     findAll(
         @Query("stationId") stationId?: string,
         @Query("status") status?: string,
-        @Query("operatorId") operatorId?: string
+        @Query("operatorId") operatorId?: string,
+        @Query("isPrinted") isPrinted?: string,
+        @Query("page") page?: string,
+        @Query("limit") limit?: string
     ) {
         return this.checksService.findAll({
             stationId: stationId ? parseInt(stationId) : undefined,
             status,
             operatorId: operatorId ? parseInt(operatorId) : undefined,
+            isPrinted: isPrinted !== undefined ? isPrinted === "true" : undefined,
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 100,
         });
     }
 

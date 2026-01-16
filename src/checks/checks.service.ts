@@ -24,20 +24,67 @@ export class ChecksService {
         return code;
     }
 
-    async findAll(filters?: { stationId?: number; status?: string; operatorId?: number }) {
-        return this.prisma.check.findMany({
-            where: {
-                ...(filters?.stationId && { stationId: filters.stationId }),
-                ...(filters?.status && { status: filters.status as any }),
-                ...(filters?.operatorId && { operatorId: filters.operatorId }),
+    async findAll(filters?: {
+        stationId?: number;
+        status?: string;
+        operatorId?: number;
+        isPrinted?: boolean;
+        page?: number;
+        limit?: number;
+    }) {
+        const page = filters?.page || 1;
+        const limit = filters?.limit || 100;
+        const skip = (page - 1) * limit;
+
+        const where = {
+            ...(filters?.stationId && { stationId: filters.stationId }),
+            ...(filters?.status && { status: filters.status as any }),
+            ...(filters?.operatorId && { operatorId: filters.operatorId }),
+            ...(filters?.isPrinted !== undefined && { isPrinted: filters.isPrinted }),
+        };
+
+        // Chop etilmagan cheklar uchun qrCode ham qaytariladi
+        const includeQrCode = filters?.isPrinted === false;
+
+        const [data, total] = await Promise.all([
+            this.prisma.check.findMany({
+                where,
+                select: {
+                    id: true,
+                    code: true,
+                    qrCode: includeQrCode,
+                    amountLiters: true,
+                    status: true,
+                    isPrinted: true,
+                    customerName: true,
+                    customerPhone: true,
+                    customerAddress: true,
+                    operatorId: true,
+                    stationId: true,
+                    customerId: true,
+                    usedAt: true,
+                    createdAt: true,
+                    expiresAt: true,
+                    operator: { select: { id: true, fullName: true, username: true } },
+                    customer: { select: { id: true, fullName: true, phone: true, telegramId: true } },
+                    station: { select: { id: true, name: true } },
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            this.prisma.check.count({ where }),
+        ]);
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
-            include: {
-                operator: { select: { id: true, fullName: true, username: true } },
-                customer: { select: { id: true, fullName: true, phone: true, telegramId: true } },
-                station: { select: { id: true, name: true } },
-            },
-            orderBy: { createdAt: "desc" },
-        });
+        };
     }
 
     async findByCode(code: string) {
@@ -349,13 +396,20 @@ export class ChecksService {
                     lte: endDate,
                 },
             },
-            include: {
+            select: {
+                id: true,
+                code: true,
+                amountLiters: true,
+                status: true,
+                customerName: true,
+                customerPhone: true,
+                createdAt: true,
+                usedAt: true,
                 customer: {
                     select: {
                         telegramId: true,
                         fullName: true,
                         phone: true,
-                        createdAt: true,
                     },
                 },
                 station: { select: { name: true } },

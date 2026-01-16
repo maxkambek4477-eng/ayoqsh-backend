@@ -8,26 +8,56 @@ import * as bcrypt from "bcrypt";
 export class UsersService {
     constructor(private prisma: PrismaService) { }
 
-    async findAll(role?: Role) {
-        const users = await this.prisma.user.findMany({
-            where: role ? { role } : undefined,
-            include: {
-                station: { select: { id: true, name: true } },
-                usedChecks: {
-                    select: {
-                        station: { select: { id: true, name: true } },
-                    },
-                    orderBy: { createdAt: "desc" },
-                    take: 1,
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        });
+    async findAll(role?: Role, page: number = 1, limit: number = 100) {
+        const skip = (page - 1) * limit;
 
-        return users.map(({ password, usedChecks, ...user }) => ({
+        const [users, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where: role ? { role } : undefined,
+                select: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    phone: true,
+                    telegramId: true,
+                    telegramUsername: true,
+                    role: true,
+                    balanceLiters: true,
+                    isActive: true,
+                    createdAt: true,
+                    stationId: true,
+                    station: { select: { id: true, name: true } },
+                    usedChecks: {
+                        select: {
+                            station: { select: { id: true, name: true } },
+                        },
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            this.prisma.user.count({
+                where: role ? { role } : undefined,
+            }),
+        ]);
+
+        const data = users.map(({ usedChecks, ...user }) => ({
             ...user,
             lastStation: usedChecks?.[0]?.station || null,
         }));
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
     async findOne(id: number) {
@@ -173,45 +203,82 @@ export class UsersService {
         return rank + 1;
     }
 
-    async getStationCustomers(stationId: number) {
-        return this.prisma.user.findMany({
-            where: {
-                role: "customer",
-                usedChecks: {
-                    some: { stationId },
-                },
+    async getStationCustomers(stationId: number, page: number = 1, limit: number = 50) {
+        const skip = (page - 1) * limit;
+
+        const where = {
+            role: "customer" as const,
+            usedChecks: {
+                some: { stationId },
             },
-            select: {
-                id: true,
-                fullName: true,
-                phone: true,
-                balanceLiters: true,
-                _count: {
-                    select: { usedChecks: { where: { stationId } } },
+        };
+
+        const [data, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                select: {
+                    id: true,
+                    fullName: true,
+                    phone: true,
+                    balanceLiters: true,
+                    _count: {
+                        select: { usedChecks: { where: { stationId } } },
+                    },
                 },
+                orderBy: { balanceLiters: "desc" },
+                skip,
+                take: limit,
+            }),
+            this.prisma.user.count({ where }),
+        ]);
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
-            orderBy: { balanceLiters: "desc" },
-        });
+        };
     }
 
     async delete(id: number) {
         return this.prisma.user.delete({ where: { id } });
     }
 
-    async getCustomersReport(order: "asc" | "desc" = "desc") {
-        return this.prisma.user.findMany({
-            where: { role: "customer", isActive: true },
-            select: {
-                id: true,
-                fullName: true,
-                phone: true,
-                telegramUsername: true,
-                balanceLiters: true,
-                createdAt: true,
-                _count: { select: { usedChecks: true } },
+    async getCustomersReport(order: "asc" | "desc" = "desc", page: number = 1, limit: number = 50) {
+        const skip = (page - 1) * limit;
+        const where = { role: "customer" as const, isActive: true };
+
+        const [data, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                select: {
+                    id: true,
+                    fullName: true,
+                    phone: true,
+                    telegramUsername: true,
+                    balanceLiters: true,
+                    createdAt: true,
+                    _count: { select: { usedChecks: true } },
+                },
+                orderBy: { balanceLiters: order },
+                skip,
+                take: limit,
+            }),
+            this.prisma.user.count({ where }),
+        ]);
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
-            orderBy: { balanceLiters: order },
-        });
+        };
     }
 
     async getCustomersForExport() {

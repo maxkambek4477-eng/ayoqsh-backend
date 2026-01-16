@@ -10,8 +10,16 @@ export class UsersController {
     constructor(private usersService: UsersService) { }
 
     @Get()
-    findAll(@Query("role") role?: Role) {
-        return this.usersService.findAll(role);
+    findAll(
+        @Query("role") role?: Role,
+        @Query("page") page?: string,
+        @Query("limit") limit?: string
+    ) {
+        return this.usersService.findAll(
+            role,
+            page ? parseInt(page) : 1,
+            limit ? parseInt(limit) : 100
+        );
     }
 
     @Get("ranking")
@@ -28,8 +36,16 @@ export class UsersController {
     }
 
     @Get("report")
-    getCustomersReport(@Query("order") order?: "asc" | "desc") {
-        return this.usersService.getCustomersReport(order || "desc");
+    getCustomersReport(
+        @Query("order") order?: "asc" | "desc",
+        @Query("page") page?: string,
+        @Query("limit") limit?: string
+    ) {
+        return this.usersService.getCustomersReport(
+            order || "desc",
+            page ? parseInt(page) : 1,
+            limit ? parseInt(limit) : 50
+        );
     }
 
     @Get("export/excel")
@@ -94,8 +110,16 @@ export class UsersController {
     }
 
     @Get("station/:stationId/customers")
-    getStationCustomers(@Param("stationId", ParseIntPipe) stationId: number) {
-        return this.usersService.getStationCustomers(stationId);
+    getStationCustomers(
+        @Param("stationId", ParseIntPipe) stationId: number,
+        @Query("page") page?: string,
+        @Query("limit") limit?: string
+    ) {
+        return this.usersService.getStationCustomers(
+            stationId,
+            page ? parseInt(page) : 1,
+            limit ? parseInt(limit) : 50
+        );
     }
 
     @Get(":id")
