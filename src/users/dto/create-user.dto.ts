@@ -58,4 +58,9 @@ export class UpdateUserDto {
     @IsOptional()
     @Type(() => Number)
     stationId?: number;
+
+    @IsNumber()
+    @IsOptional()
+    @Type(() => Number)
+    balanceLiters?: number;
 }
