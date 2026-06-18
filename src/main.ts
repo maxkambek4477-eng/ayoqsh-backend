@@ -34,14 +34,14 @@ async function bootstrap() {
 
             expressApp.post("/bot/webhook", async (req: any, res: any) => {
                 try {
-                    if (!req.body || !req.body.update_id) {
-                        return res.status(400).json({ error: "Invalid update" });
+                    if (!req.body) {
+                        return res.status(400).json({ error: "No body" });
                     }
                     await bot.handleUpdate(req.body);
                     res.status(200).json({ ok: true });
-                } catch (error) {
-                    console.error("Webhook xatosi:", error);
-                    res.status(500).json({ error: "Internal server error" });
+                } catch (error: any) {
+                    console.error("Webhook xatosi:", error.message);
+                    res.status(200).json({ ok: true }); // Telegram uchun 200 qaytarish kerak
                 }
             });
 
