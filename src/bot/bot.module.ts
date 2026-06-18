@@ -20,11 +20,11 @@ import { PrismaModule } from "../prisma/prisma.module";
                     return { token: "dummy_token", launchOptions: false };
                 }
 
-                // Telegram bloklangan bo'lsa — launchOptions: false
-                // Bu getMe() chaqirilmasligi uchun
+                // WEBHOOK rejimi uchun — launchOptions: false
+                // getMe() chaqirilmaydi, faqat webhook qabul qilinadi
                 return {
                     token,
-                    launchOptions: false,
+                    launchOptions: false, // Telegram API ga ulanmaydi
                 };
             },
             inject: [ConfigService],
