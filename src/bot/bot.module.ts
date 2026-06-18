@@ -20,11 +20,12 @@ import { PrismaModule } from "../prisma/prisma.module";
                     return { token: "dummy_token", launchOptions: false };
                 }
 
-                // WEBHOOK rejimi uchun — launchOptions: false
-                // getMe() chaqirilmaydi, faqat webhook qabul qilinadi
+                // Polling rejimi (development va test uchun)
                 return {
                     token,
-                    launchOptions: false, // Telegram API ga ulanmaydi
+                    launchOptions: {
+                        dropPendingUpdates: true,
+                    },
                 };
             },
             inject: [ConfigService],
@@ -46,7 +47,9 @@ export class BotModule implements OnModuleInit {
         if (token && webhookDomain) {
             console.log(`✅ Telegram bot webhook rejimida: ${webhookDomain}/bot/webhook`);
         } else if (token) {
-            console.log("✅ Telegram bot polling rejimida");
+            console.log("✅ Telegram bot polling rejimida (lokal development)");
+        } else {
+            console.warn("⚠️ BOT_TOKEN topilmadi");
         }
     }
 }

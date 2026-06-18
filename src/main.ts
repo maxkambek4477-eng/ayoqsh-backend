@@ -26,38 +26,6 @@ async function bootstrap() {
     await app.listen(port, "0.0.0.0");
     console.log(`🚀 NestJS server running on http://0.0.0.0:${port}`);
 
-    // Webhook endpoint (listen dan KEYIN qo'shamiz)
-    const webhookDomain = process.env.WEBHOOK_DOMAIN;
-    if (webhookDomain) {
-        try {
-            const bot = app.get(getBotToken());
-            const httpAdapter = app.getHttpAdapter();
-            const expressApp = httpAdapter.getInstance();
-
-            // Body ni to'g'ridan o'qish
-            expressApp.post("/bot/webhook", async (req: any, res: any) => {
-                try {
-                    const update = req.body;
-                    console.log('📥 Webhook received, update_id:', update?.update_id || 'NO UPDATE');
-
-                    if (!update) {
-                        return res.status(400).json({ error: "No body" });
-                    }
-
-                    await bot.handleUpdate(update);
-                    res.status(200).json({ ok: true });
-                } catch (error: any) {
-                    console.error("Webhook xatosi:", error.message);
-                    res.status(200).json({ ok: true });
-                }
-            });
-
-            console.log(`✅ Webhook route active: ${webhookDomain}/bot/webhook`);
-        } catch (e) {
-            console.warn("⚠️ Webhook qo'shilmadi:", e);
-        }
-    }
-
     // SIGINT/SIGTERM handlerlarni o'chirish — PM2 bilan muammo chiqarmaslik uchun
 }
 
