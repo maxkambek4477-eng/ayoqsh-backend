@@ -22,7 +22,7 @@ async function bootstrap() {
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
 
-    // Webhook endpoint (agar webhook rejimi yoqilgan bo'lsa)
+    // Webhook endpoint (agar webhook rejimi yoqilgan bo'lsa) - LISTEN DAN OLDIN
     const webhookDomain = process.env.WEBHOOK_DOMAIN;
     if (webhookDomain) {
         try {
@@ -34,6 +34,7 @@ async function bootstrap() {
 
             expressApp.post("/bot/webhook", async (req: any, res: any) => {
                 try {
+                    console.log('📥 Webhook received:', req.body ? 'body exists' : 'NO BODY');
                     if (!req.body) {
                         return res.status(400).json({ error: "No body" });
                     }
@@ -50,9 +51,6 @@ async function bootstrap() {
             console.warn("⚠️ Webhook qo'shilmadi:", e);
         }
     }
-
-    // enableShutdownHooks ni o'chirish — bot bilan muammo chiqarmaslik uchun
-    // app.enableShutdownHooks();
 
     const port = process.env.PORT || 3001;
     await app.listen(port, "0.0.0.0");
