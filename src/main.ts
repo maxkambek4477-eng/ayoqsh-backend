@@ -8,7 +8,19 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-    app.enableCors();
+
+    // CORS sozlamalari
+    app.enableCors({
+        origin: [
+            'https://www.nbsgazoil.uz',
+            'https://nbsgazoil.uz',
+            'http://localhost:5173',
+            'http://localhost:5174'
+        ],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    });
 
     // Webhook endpoint (agar webhook rejimi yoqilgan bo'lsa)
     const webhookDomain = process.env.WEBHOOK_DOMAIN;
