@@ -22,39 +22,41 @@ async function bootstrap() {
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     });
 
-    // Webhook endpoint (agar webhook rejimi yoqilgan bo'lsa) - LISTEN DAN OLDIN
+    const port = process.env.PORT || 3001;
+    await app.listen(port, "0.0.0.0");
+    console.log(`🚀 NestJS server running on http://0.0.0.0:${port}`);
+
+    // Webhook endpoint (listen dan KEYIN qo'shamiz)
     const webhookDomain = process.env.WEBHOOK_DOMAIN;
     if (webhookDomain) {
         try {
             const bot = app.get(getBotToken());
-
-            // Express instance ga to'g'ridan webhook route qo'shamiz
             const httpAdapter = app.getHttpAdapter();
             const expressApp = httpAdapter.getInstance();
 
+            // Body ni to'g'ridan o'qish
             expressApp.post("/bot/webhook", async (req: any, res: any) => {
                 try {
-                    console.log('📥 Webhook received:', req.body ? 'body exists' : 'NO BODY');
-                    if (!req.body) {
+                    const update = req.body;
+                    console.log('📥 Webhook received, update_id:', update?.update_id || 'NO UPDATE');
+
+                    if (!update) {
                         return res.status(400).json({ error: "No body" });
                     }
-                    await bot.handleUpdate(req.body);
+
+                    await bot.handleUpdate(update);
                     res.status(200).json({ ok: true });
                 } catch (error: any) {
                     console.error("Webhook xatosi:", error.message);
-                    res.status(200).json({ ok: true }); // Telegram uchun 200 qaytarish kerak
+                    res.status(200).json({ ok: true });
                 }
             });
 
-            console.log(`✅ Webhook qo'shildi: ${webhookDomain}/bot/webhook`);
+            console.log(`✅ Webhook route active: ${webhookDomain}/bot/webhook`);
         } catch (e) {
             console.warn("⚠️ Webhook qo'shilmadi:", e);
         }
     }
-
-    const port = process.env.PORT || 3001;
-    await app.listen(port, "0.0.0.0");
-    console.log(`🚀 NestJS server running on http://0.0.0.0:${port}`);
 
     // SIGINT/SIGTERM handlerlarni o'chirish — PM2 bilan muammo chiqarmaslik uchun
 }
