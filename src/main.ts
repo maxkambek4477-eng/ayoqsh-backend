@@ -27,10 +27,18 @@ async function bootstrap() {
     if (webhookDomain) {
         try {
             const bot = app.get(getBotToken());
-            app.use(bot.webhookCallback("/bot/webhook"));
+
+            // Express instance ga to'g'ridan webhook route qo'shamiz
+            const httpAdapter = app.getHttpAdapter();
+            const expressApp = httpAdapter.getInstance();
+
+            expressApp.post("/bot/webhook", (req: any, res: any) => {
+                bot.handleUpdate(req.body, res);
+            });
+
             console.log(`✅ Webhook qo'shildi: ${webhookDomain}/bot/webhook`);
         } catch (e) {
-            console.warn("⚠️ Webhook qo'shilmadi, bot o'chiq");
+            console.warn("⚠️ Webhook qo'shilmadi:", e);
         }
     }
 
