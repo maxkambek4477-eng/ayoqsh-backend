@@ -32,8 +32,17 @@ async function bootstrap() {
             const httpAdapter = app.getHttpAdapter();
             const expressApp = httpAdapter.getInstance();
 
-            expressApp.post("/bot/webhook", (req: any, res: any) => {
-                bot.handleUpdate(req.body, res);
+            expressApp.post("/bot/webhook", async (req: any, res: any) => {
+                try {
+                    if (!req.body || !req.body.update_id) {
+                        return res.status(400).json({ error: "Invalid update" });
+                    }
+                    await bot.handleUpdate(req.body);
+                    res.status(200).json({ ok: true });
+                } catch (error) {
+                    console.error("Webhook xatosi:", error);
+                    res.status(500).json({ error: "Internal server error" });
+                }
             });
 
             console.log(`✅ Webhook qo'shildi: ${webhookDomain}/bot/webhook`);
