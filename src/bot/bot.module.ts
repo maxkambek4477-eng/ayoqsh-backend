@@ -20,25 +20,11 @@ import { PrismaModule } from "../prisma/prisma.module";
                     return { token: "dummy_token", launchOptions: false };
                 }
 
-                // Webhook rejimi
-                if (webhookDomain) {
-                    return {
-                        token,
-                        launchOptions: {
-                            webhook: {
-                                domain: webhookDomain,
-                                hookPath: "/bot/webhook",
-                            },
-                        },
-                    };
-                }
-
-                // Polling rejimi (local development uchun)
+                // Telegram bloklangan bo'lsa — launchOptions: false
+                // Bu getMe() chaqirilmasligi uchun
                 return {
                     token,
-                    launchOptions: {
-                        dropPendingUpdates: true,
-                    },
+                    launchOptions: false,
                 };
             },
             inject: [ConfigService],
